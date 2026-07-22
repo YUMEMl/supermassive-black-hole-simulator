@@ -18,7 +18,6 @@ uniform float uExposure;
 uniform float uMinStep;
 uniform float uMaxStep;
 uniform int uMaxSteps;
-uniform sampler2D uDiskTexture;
 
 const float PI = 3.141592653589793;
 const float HALF_PI = 1.5707963267948966;
@@ -267,16 +266,38 @@ vec3 starField(float theta, float phi) {
     return stars + dust * galacticBand * fineDust;
 }
 
+float valueNoise(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 local = fract(p);
+    local = local * local * (3.0 - 2.0 * local);
+    float a = hash12(cell);
+    float b = hash12(cell + vec2(1.0, 0.0));
+    float c = hash12(cell + vec2(0.0, 1.0));
+    float d = hash12(cell + vec2(1.0, 1.0));
+    return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+}
+
+float diskTurbulence(vec2 p) {
+    float sum = 0.0;
+    float weight = 0.56;
+    mat2 rotation = mat2(0.80, -0.60, 0.60, 0.80);
+    for (int octave = 0; octave < 3; ++octave) {
+        sum += valueNoise(p) * weight;
+        p = rotation * p * 2.07 + vec2(4.7, 1.3);
+        weight *= 0.50;
+    }
+    return sum;
+}
+
 vec4 sampleDisk(float r, float phi, float pt, float pphi, float a) {
     float radial = clamp((r - uDiskInner) / max(uDiskOuter - uDiskInner, 0.001), 0.0, 1.0);
     float textureAngle = phi / (2.0 * PI) - uTime * 0.006 / max(pow(r, 1.5), 1.0);
-    vec2 turbulentUv = vec2(
-        fract(textureAngle + radial * 2.37 + sin(r * 1.71) * 0.11),
-        fract(radial * 5.0 + sin(textureAngle * 2.0 * PI) * 0.18)
-    );
-    vec3 textureDetail = texture(uDiskTexture, turbulentUv).rgb;
-    float textureLuma = dot(textureDetail, vec3(0.299, 0.587, 0.114));
-    float filament = mix(0.52, 1.38, smoothstep(0.08, 0.92, textureLuma));
+    float periodicAngle = textureAngle * 2.0 * PI;
+    vec2 circularFlow = vec2(cos(periodicAngle), sin(periodicAngle));
+    vec2 turbulentUv = circularFlow * (3.4 + radial * 8.0) + vec2(radial * 13.0, r * 0.43);
+    float textureLuma = diskTurbulence(turbulentUv + vec2(uTime * 0.07, -uTime * 0.025));
+    float spiral = 0.5 + 0.5 * sin(r * 10.8 - periodicAngle * 7.0 + textureLuma * 5.2);
+    float filament = mix(0.52, 1.38, smoothstep(0.16, 0.88, textureLuma * 0.72 + spiral * 0.28));
     float fineRing = 0.88 + 0.12 * sin(
         r * 8.3 + sin(textureAngle * 2.0 * PI) * 2.2 + textureLuma * 4.0
     );

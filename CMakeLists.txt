@@ -73,8 +73,7 @@ add_custom_command(TARGET ton618 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/shaders/kerr.frag"
             "$<TARGET_FILE_DIR:ton618>/shaders/kerr.frag"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/assets"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory
             "$<TARGET_FILE_DIR:ton618>/assets"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/README.md"

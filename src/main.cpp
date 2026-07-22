@@ -14,9 +14,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-#define STBI_WINDOWS_UTF8
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
@@ -155,34 +152,6 @@ T loadOpenGlProcedure(const char* name) {
     const auto procedure = reinterpret_cast<T>(glfwGetProcAddress(name));
     if (!procedure) throw std::runtime_error(std::string("Missing OpenGL procedure: ") + name);
     return procedure;
-}
-
-GLuint loadTexture(const std::filesystem::path& path) {
-    stbi_set_flip_vertically_on_load(1);
-    int width = 0;
-    int height = 0;
-    int components = 0;
-    unsigned char* pixels = stbi_load(path.string().c_str(), &width, &height, &components, 3);
-
-    const unsigned char fallback[] = {214, 174, 126};
-    const void* data = pixels ? static_cast<const void*>(pixels) : static_cast<const void*>(fallback);
-    if (!pixels) {
-        width = 1;
-        height = 1;
-    }
-
-    GLuint texture = 0;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GlRgb, width, height, 0, GlRgb, GL_UNSIGNED_BYTE, data);
-
-    if (pixels) stbi_image_free(pixels);
-    return texture;
 }
 
 float progradeIsco(float spin) {
@@ -345,8 +314,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         GLuint fullscreenVao = 0;
         glGenVertexArrays(1, &fullscreenVao);
-        const GLuint diskTexture = loadTexture(appDirectory / "assets" / "accretion_reference.jpg");
-
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
@@ -440,9 +407,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             glClear(GL_COLOR_BUFFER_BIT);
             glUseProgram(rayProgram);
             glBindVertexArray(fullscreenVao);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, diskTexture);
-            glUniform1i(glGetUniformLocation(rayProgram, "uDiskTexture"), 0);
             setUniform2f(rayProgram, "uResolution", static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight));
             setUniform1f(rayProgram, "uTime", static_cast<float>(simulationTime));
             setUniform3f(rayProgram, "uCameraPosition", cameraPosition);
@@ -485,7 +449,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
-        glDeleteTextures(1, &diskTexture);
         glDeleteVertexArrays(1, &fullscreenVao);
         glDeleteProgram(rayProgram);
         glfwDestroyWindow(window);

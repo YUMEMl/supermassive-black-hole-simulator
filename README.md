@@ -6,7 +6,7 @@ A native Windows visualization of the supermassive black hole TON 618, rendered 
 
 ## Run
 
-Extract the release ZIP and open `Supermassive Black Hole-simulator.exe`. Keep the adjacent `shaders` and `assets` folders with the executable.
+Extract the release ZIP and open `Supermassive Black Hole-simulator.exe`. Keep the adjacent `shaders` folder with the executable.
 
 Requirements:
 
@@ -14,6 +14,18 @@ Requirements:
 - OpenGL 3.3 compatible GPU
 
 Rendering is capped at 20 FPS. There is no FPS overlay and no application icon.
+
+## Recommended PC specifications
+
+| Component | Minimum | Recommended for the 20 FPS target |
+| --- | --- | --- |
+| OS | Windows 10 64-bit | Windows 11 64-bit |
+| CPU | 4-core x64 processor | Modern 6-core processor or better |
+| Memory | 8 GB RAM | 16 GB RAM |
+| GPU | Dedicated OpenGL 3.3 GPU with 2 GB VRAM | Dedicated GPU with 6 GB VRAM or more |
+| Storage | 100 MB available | 200 MB available |
+
+The current build is verified on an NVIDIA GeForce RTX 2080 Ti at the 20 FPS cap. Actual performance depends mainly on GPU fragment-shader throughput and display resolution.
 
 ## Controls
 
@@ -33,7 +45,7 @@ The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing ang
 - Event-horizon silhouette, photon ring, and multiple lensed disk images
 - `T proportional to r^-3/4` disk color gradient
 - Spin-dependent Doppler-inspired disk asymmetry
-- Animated filaments using the supplied accretion-disk reference image
+- Procedurally generated animated accretion-disk filaments
 - Procedural stars and ACES-style tone mapping
 
 The shader integrates photon trajectories per pixel with adaptive steps. It is a real-time educational approximation, not a full Einstein-field-equation solver.
@@ -50,9 +62,7 @@ r+ = (GM/c^2) * (1 + sqrt(1 - (a/M)^2))
 - GLFW 3.4
 - GLM 1.0.3
 - Dear ImGui 1.92.8
-- stb_image / stb_image_write
-
-The accretion texture is based on user-supplied artwork credited to Adis Resic.
+- stb_image_write
 
 ## Build
 
