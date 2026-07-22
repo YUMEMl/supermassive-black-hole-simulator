@@ -1,0 +1,18 @@
+# Local build outputs
+/build/
+/dist/
+
+# Local compiler and downloaded SDKs
+/.toolchain/
+
+# IDE and OS files
+/.vscode/
+/.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Runtime diagnostics
+ton618-native-*.png
+ton618-native-*.txt
