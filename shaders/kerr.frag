@@ -372,11 +372,13 @@ vec3 tracePixel(vec2 pixel) {
         state = integrateRk4(state, pt, pphi, uSpin, h);
 
         if (state.theta < 0.001) {
-            state.theta = 0.001;
-            state.ptheta = abs(state.ptheta);
+            state.theta = max(-state.theta, 0.001);
+            state.phi += PI;
+            state.ptheta = -state.ptheta;
         } else if (state.theta > PI - 0.001) {
-            state.theta = PI - 0.001;
-            state.ptheta = -abs(state.ptheta);
+            state.theta = min(2.0 * PI - state.theta, PI - 0.001);
+            state.phi += PI;
+            state.ptheta = -state.ptheta;
         }
 
         // Re-project p_r onto H=0 to control numerical drift of the null constraint.
@@ -407,11 +409,13 @@ vec3 tracePixel(vec2 pixel) {
         }
     }
 
-    // If the loop budget ends while a photon is already moving outward in the
-    // weak-field region, classify it as escaped rather than painting it black.
-    float weakFieldEscapeRadius = max(uDiskOuter * 1.35, 22.0);
-    if (!captured && !escaped && state.pr > 0.0 && state.r > weakFieldEscapeRadius) {
-        escaped = true;
+    // Resolve rays that exhaust the finite real-time budget without creating
+    // a false, camera-sized black boundary. Only inward rays already inside
+    // the strong-field capture region are treated as part of the shadow.
+    if (!captured && !escaped) {
+        float captureFallbackRadius = max(horizon * 2.65, 4.25);
+        captured = state.pr < 0.0 && state.r < captureFallbackRadius;
+        escaped = !captured;
     }
 
     vec3 background = escaped ? starField(state.theta, state.phi) : vec3(0.0);
@@ -425,27 +429,14 @@ vec3 tracePixel(vec2 pixel) {
 }
 
 vec3 traceStablePixel(vec2 pixel) {
-    // Boyer-Lindquist coordinates are singular on the rotation axis. Rays with
-    // almost zero axial angular momentum can therefore accumulate visible
-    // numerical noise in a very narrow screen-space band. Reconstruct only
-    // that band from stable neighbouring geodesics.
-    float seamWidth = 20.0 / uResolution.y;
-    vec3 color;
-    if (abs(pixel.x) < seamWidth) {
-        float neighbor = 48.0 / uResolution.y;
-        vec3 leftColor = tracePixel(vec2(-neighbor, pixel.y));
-        vec3 rightColor = tracePixel(vec2(neighbor, pixel.y));
-        float blend = clamp(0.5 + 0.5 * pixel.x / seamWidth, 0.0, 1.0);
-        color = mix(leftColor, rightColor, blend);
-    } else {
-        color = tracePixel(pixel);
-    }
-    return color;
+    // Polar crossings are handled in tracePixel by reflecting theta and
+    // rotating phi by PI, so no screen-space seam reconstruction is needed.
+    return tracePixel(pixel);
 }
 
 void main() {
     vec2 pixel = (2.0 * gl_FragCoord.xy - uResolution) / uResolution.y;
-    vec2 sampleOffset = vec2(0.62, -0.38) / uResolution.y;
+    vec2 sampleOffset = vec2(0.0, 0.58) / uResolution.y;
     vec3 color = 0.5 * (
         traceStablePixel(pixel - sampleOffset) +
         traceStablePixel(pixel + sampleOffset)
