@@ -30,6 +30,10 @@ set(required_main_markers
     "glm::radians(-82.0f)"
     "massVisualScale"
     "checkFramebufferStatus(GlFramebuffer)"
+    "GLFW_KEY_P"
+    "GLFW_KEY_SPACE"
+    "AutoOrbitRadiansPerSecond"
+    "TON618_DIAGNOSTICS_AUTO_PLAY"
 )
 foreach(marker IN LISTS required_main_markers)
     string(FIND "${main_source}" "${marker}" marker_position)

@@ -34,11 +34,13 @@ The current build is verified on an NVIDIA GeForce RTX 4070 Ti at the 20 FPS cap
 - `W` / `S`: zoom in or out
 - `A` / `D`: orbit left or right
 - `Q` / `E`: change viewing latitude
+- `P`: toggle continuous auto play and camera orbit
+- `Space`: pause or resume the simulation and auto orbit
 - Left mouse drag: orbit camera
 - `F1`: show or hide the parameter panel
 - `Esc`: close
 
-The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing angle, and simulation time scale. Mass changes the visual scale and the calculated event-horizon radius shown in the upper-left readout. The visual scale is deliberately compressed so the full slider range remains usable on screen.
+The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing angle, and simulation time scale. Auto play keeps the disk animation running while orbiting the camera until `P` is pressed again. Mass changes the visual scale and the calculated event-horizon radius shown in the upper-left readout. The visual scale is deliberately compressed so the full slider range remains usable on screen.
 
 ## Visual model
 

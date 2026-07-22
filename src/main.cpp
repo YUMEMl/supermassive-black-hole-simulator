@@ -37,6 +37,7 @@ constexpr GLenum GlFramebuffer = 0x8D40;
 constexpr GLenum GlColorAttachment0 = 0x8CE0;
 constexpr GLenum GlFramebufferComplete = 0x8CD5;
 constexpr double TargetFrameSeconds = 1.0 / 20.0;
+constexpr float AutoOrbitRadiansPerSecond = 0.16f;
 
 using Uniform1fProc = void(APIENTRY*)(GLint, GLfloat);
 using Uniform2fProc = void(APIENTRY*)(GLint, GLfloat, GLfloat);
@@ -228,7 +229,12 @@ void renderTelemetry(const SimulationParameters& parameters, const Camera& camer
     ImGui::End();
 }
 
-void renderControls(SimulationParameters& parameters, Camera& camera, bool& visible) {
+void renderControls(
+    SimulationParameters& parameters,
+    Camera& camera,
+    bool& visible,
+    bool autoPlay
+) {
     if (!visible) return;
 
     ImGui::SetNextWindowPos(ImVec2(18.0f, 210.0f), ImGuiCond_FirstUseEver);
@@ -263,13 +269,22 @@ void renderControls(SimulationParameters& parameters, Camera& camera, bool& visi
 
         ImGui::SliderFloat("Time scale", &parameters.timeScale, 0.0f, 5.0f, "%.2fx");
         ImGui::Separator();
+        ImGui::Text("Auto play: %s", autoPlay ? "ON" : "OFF");
         ImGui::TextUnformatted("WASD: move/orbit   Q/E: latitude");
+        ImGui::TextUnformatted("P: auto play   Space: pause/resume");
         ImGui::TextUnformatted("Mouse drag: look   F1: hide controls");
     }
     ImGui::End();
 }
 
-void writeDiagnostics(int width, int height, float framesPerSecond) {
+void writeDiagnostics(
+    int width,
+    int height,
+    float framesPerSecond,
+    bool autoPlay,
+    float cameraYaw,
+    double simulationTime
+) {
     const auto previewPath = std::filesystem::temp_directory_path() / "ton618-native-preview.png";
     const auto reportPath = std::filesystem::temp_directory_path() / "ton618-native-performance.txt";
     std::vector<unsigned char> pixels(static_cast<size_t>(width) * static_cast<size_t>(height) * 3u);
@@ -283,6 +298,9 @@ void writeDiagnostics(int width, int height, float framesPerSecond) {
     report << "renderer=" << reinterpret_cast<const char*>(glGetString(GL_RENDERER)) << '\n';
     report << "vendor=" << reinterpret_cast<const char*>(glGetString(GL_VENDOR)) << '\n';
     report << "opengl=" << reinterpret_cast<const char*>(glGetString(GL_VERSION)) << '\n';
+    report << "auto_play=" << (autoPlay ? 1 : 0) << '\n';
+    report << "camera_yaw=" << cameraYaw << '\n';
+    report << "simulation_time=" << simulationTime << '\n';
 }
 
 } // namespace
@@ -373,7 +391,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
         parameters.diskInner = progradeIsco(parameters.spin);
         bool showControls = true;
+        bool autoPlay = std::getenv("TON618_DIAGNOSTICS_AUTO_PLAY") != nullptr;
         bool previousF1 = false;
+        bool previousP = false;
+        bool previousSpace = false;
         bool dragging = false;
         const bool diagnosticsEnabled = std::getenv("TON618_DIAGNOSTICS") != nullptr;
         bool diagnosticsWritten = false;
@@ -382,6 +403,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         double previousTime = glfwGetTime() - TargetFrameSeconds;
         double simulationTime = 0.0;
         float smoothedFps = 20.0f;
+        float resumeTimeScale = std::max(parameters.timeScale, 0.01f);
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -397,7 +419,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             previousF1 = f1;
             if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, GLFW_TRUE);
 
+            const bool p = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+            const bool space = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
             if (!io.WantCaptureKeyboard) {
+                if (p && !previousP) {
+                    autoPlay = !autoPlay;
+                    if (autoPlay && parameters.timeScale <= 0.001f) {
+                        parameters.timeScale = resumeTimeScale;
+                    }
+                }
+                if (space && !previousSpace) {
+                    if (parameters.timeScale > 0.001f) {
+                        resumeTimeScale = parameters.timeScale;
+                        parameters.timeScale = 0.0f;
+                    } else {
+                        parameters.timeScale = std::max(resumeTimeScale, 0.01f);
+                    }
+                }
                 const float movement = 6.0f * deltaTime;
                 if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.radius -= movement;
                 if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.radius += movement;
@@ -405,6 +443,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera.yaw += movement * 0.22f;
                 if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) camera.latitude += movement * 0.12f;
                 if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) camera.latitude -= movement * 0.12f;
+            }
+            previousP = p;
+            previousSpace = space;
+            if (autoPlay && parameters.timeScale > 0.001f) {
+                camera.yaw += AutoOrbitRadiansPerSecond * deltaTime;
             }
             camera.radius = std::clamp(camera.radius, 7.0f, 52.0f);
             camera.latitude = std::clamp(camera.latitude, glm::radians(-82.0f), glm::radians(82.0f));
@@ -529,12 +572,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             renderTelemetry(parameters, camera);
-            renderControls(parameters, camera, showControls);
+            renderControls(parameters, camera, showControls, autoPlay);
+            if (parameters.timeScale > 0.001f) {
+                resumeTimeScale = parameters.timeScale;
+            }
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             if (diagnosticsEnabled && !diagnosticsWritten && now > 4.0) {
-                writeDiagnostics(framebufferWidth, framebufferHeight, smoothedFps);
+                writeDiagnostics(
+                    framebufferWidth,
+                    framebufferHeight,
+                    smoothedFps,
+                    autoPlay,
+                    camera.yaw,
+                    simulationTime
+                );
                 diagnosticsWritten = true;
             }
             glfwSwapBuffers(window);
