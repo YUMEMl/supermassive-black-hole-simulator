@@ -27,7 +27,7 @@ Rendering is capped at 20 FPS. There is no FPS overlay and no application icon.
 | GPU | Dedicated OpenGL 3.3 GPU with 2 GB VRAM | Dedicated GPU with 6 GB VRAM or more |
 | Storage | 100 MB available | 200 MB available |
 
-The current build is verified on an NVIDIA GeForce RTX 2080 Ti at the 20 FPS cap. Actual performance depends mainly on GPU fragment-shader throughput and display resolution.
+The current build is verified on an NVIDIA GeForce RTX 4070 Ti at the 20 FPS cap. Actual performance depends mainly on GPU fragment-shader throughput and display resolution.
 
 ## Controls
 
