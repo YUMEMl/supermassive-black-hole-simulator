@@ -1,5 +1,7 @@
 # Supermassive Black Hole Simulator
 
+Please understand that this was created by a layperson with no knowledge of astronomy.
+
 A native Windows visualization of the supermassive black hole TON 618, rendered with OpenGL 3.3 and a real-time Kerr-metric shader.
 
 [Download the latest Windows build](https://github.com/YUMEMl/supermassive-black-hole-simulator/releases/latest)
