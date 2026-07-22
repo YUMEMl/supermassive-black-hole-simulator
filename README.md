@@ -38,7 +38,7 @@ The current build is verified on an NVIDIA GeForce RTX 2080 Ti at the 20 FPS cap
 - `F1`: show or hide the parameter panel
 - `Esc`: close
 
-The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing angle, and simulation time scale. The upper-left readout also shows the event-horizon radius calculated from the selected mass and spin.
+The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing angle, and simulation time scale. Mass changes the visual scale and the calculated event-horizon radius shown in the upper-left readout. The visual scale is deliberately compressed so the full slider range remains usable on screen.
 
 ## Visual model
 
@@ -68,7 +68,7 @@ r+ = (GM/c^2) * (1 + sqrt(1 - (a/M)^2))
 
 ## Build
 
-Install CMake 3.20 or newer and a Windows C++17 compiler, then run:
+Install CMake 3.20 or newer, Ninja, and a Windows C++17 compiler, then run:
 
 ```powershell
 git clone --recurse-submodules https://github.com/YUMEMl/supermassive-black-hole-simulator.git

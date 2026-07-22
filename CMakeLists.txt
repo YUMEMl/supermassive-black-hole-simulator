@@ -48,7 +48,7 @@ target_link_libraries(imgui PUBLIC glfw opengl32)
 
 add_executable(ton618 WIN32 src/main.cpp)
 set_target_properties(ton618 PROPERTIES OUTPUT_NAME "Supermassive Black Hole-simulator")
-target_compile_definitions(ton618 PRIVATE GLFW_INCLUDE_NONE NOMINMAX WIN32_LEAN_AND_MEAN)
+target_compile_definitions(ton618 PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
 target_include_directories(ton618 PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party/glm
     ${CMAKE_SOURCE_DIR}/third_party/stb
@@ -78,4 +78,12 @@ add_custom_command(TARGET ton618 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/README.md"
             "$<TARGET_FILE_DIR:ton618>/README.md"
+)
+
+enable_testing()
+add_test(
+    NAME project_validation
+    COMMAND ${CMAKE_COMMAND}
+        "-DPROJECT_ROOT=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tests/validate_project.cmake"
 )

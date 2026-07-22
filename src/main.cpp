@@ -32,17 +32,31 @@
 namespace {
 
 constexpr GLenum GlRgb = 0x1907;
+constexpr GLenum GlRgba8 = 0x8058;
+constexpr GLenum GlFramebuffer = 0x8D40;
+constexpr GLenum GlColorAttachment0 = 0x8CE0;
+constexpr GLenum GlFramebufferComplete = 0x8CD5;
 constexpr double TargetFrameSeconds = 1.0 / 20.0;
 
 using Uniform1fProc = void(APIENTRY*)(GLint, GLfloat);
 using Uniform2fProc = void(APIENTRY*)(GLint, GLfloat, GLfloat);
 using Uniform3fProc = void(APIENTRY*)(GLint, GLfloat, GLfloat, GLfloat);
 using DrawArraysProc = void(APIENTRY*)(GLenum, GLint, GLsizei);
+using GenFramebuffersProc = void(APIENTRY*)(GLsizei, GLuint*);
+using BindFramebufferProc = void(APIENTRY*)(GLenum, GLuint);
+using FramebufferTexture2DProc = void(APIENTRY*)(GLenum, GLenum, GLenum, GLuint, GLint);
+using CheckFramebufferStatusProc = GLenum(APIENTRY*)(GLenum);
+using DeleteFramebuffersProc = void(APIENTRY*)(GLsizei, const GLuint*);
 
 Uniform1fProc uniform1f = nullptr;
 Uniform2fProc uniform2f = nullptr;
 Uniform3fProc uniform3f = nullptr;
 DrawArraysProc drawArrays = nullptr;
+GenFramebuffersProc genFramebuffers = nullptr;
+BindFramebufferProc bindFramebuffer = nullptr;
+FramebufferTexture2DProc framebufferTexture2D = nullptr;
+CheckFramebufferStatusProc checkFramebufferStatus = nullptr;
+DeleteFramebuffersProc deleteFramebuffers = nullptr;
 
 struct Camera {
     float radius = 23.0f;
@@ -242,7 +256,7 @@ void renderControls(SimulationParameters& parameters, Camera& camera, bool& visi
         ImGui::SliderFloat("Accretion rate (L/L_Edd)", &parameters.accretionRate, 0.01f, 2.0f, "%.3f");
 
         float viewingAngle = 90.0f - std::abs(glm::degrees(camera.latitude));
-        if (ImGui::SliderFloat("Viewing angle", &viewingAngle, 1.0f, 90.0f, "%.1f deg")) {
+        if (ImGui::SliderFloat("Viewing angle", &viewingAngle, 8.0f, 90.0f, "%.1f deg")) {
             const float hemisphere = camera.latitude < 0.0f ? -1.0f : 1.0f;
             camera.latitude = hemisphere * glm::radians(90.0f - viewingAngle);
         }
@@ -307,13 +321,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         uniform2f = loadOpenGlProcedure<Uniform2fProc>("glUniform2f");
         uniform3f = loadOpenGlProcedure<Uniform3fProc>("glUniform3f");
         drawArrays = loadOpenGlProcedure<DrawArraysProc>("glDrawArrays");
+        genFramebuffers = loadOpenGlProcedure<GenFramebuffersProc>("glGenFramebuffers");
+        bindFramebuffer = loadOpenGlProcedure<BindFramebufferProc>("glBindFramebuffer");
+        framebufferTexture2D = loadOpenGlProcedure<FramebufferTexture2DProc>("glFramebufferTexture2D");
+        checkFramebufferStatus = loadOpenGlProcedure<CheckFramebufferStatusProc>("glCheckFramebufferStatus");
+        deleteFramebuffers = loadOpenGlProcedure<DeleteFramebuffersProc>("glDeleteFramebuffers");
 
         const std::string vertexSource = readTextFile(appDirectory / "shaders" / "fullscreen.vert");
         const std::string raySource = readTextFile(appDirectory / "shaders" / "kerr.frag");
+        const std::string blitSource = readTextFile(appDirectory / "shaders" / "blit.frag");
         const GLuint rayProgram = createProgram(vertexSource, raySource);
+        const GLuint blitProgram = createProgram(vertexSource, blitSource);
 
         GLuint fullscreenVao = 0;
         glGenVertexArrays(1, &fullscreenVao);
+        GLuint sceneFramebuffer = 0;
+        GLuint sceneTexture = 0;
+        genFramebuffers(1, &sceneFramebuffer);
+        glGenTextures(1, &sceneTexture);
+        glBindTexture(GL_TEXTURE_2D, sceneTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        int sceneWidth = 0;
+        int sceneHeight = 0;
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
@@ -331,6 +363,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             camera.radius = 52.0f;
         }
         SimulationParameters parameters;
+        if (std::getenv("TON618_DIAGNOSTICS_EDGE_ON") != nullptr) {
+            camera.latitude = glm::radians(82.0f);
+        }
+        if (std::getenv("TON618_DIAGNOSTICS_LOW_MASS") != nullptr) {
+            parameters.massSolarMasses = 1.0e6f;
+        } else if (std::getenv("TON618_DIAGNOSTICS_HIGH_MASS") != nullptr) {
+            parameters.massSolarMasses = 1.0e11f;
+        }
         parameters.diskInner = progradeIsco(parameters.spin);
         bool showControls = true;
         bool previousF1 = false;
@@ -389,9 +429,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             int framebufferWidth = 0;
             int framebufferHeight = 0;
             glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-            if (framebufferWidth <= 0 || framebufferHeight <= 0) continue;
+            if (framebufferWidth <= 0 || framebufferHeight <= 0) {
+                glfwWaitEventsTimeout(TargetFrameSeconds);
+                continue;
+            }
 
-            const glm::vec3 cameraPosition = camera.radius * glm::vec3(
+            constexpr float ReferenceMassSolarMasses = 6.60e10f;
+            const float massRatio = std::max(
+                parameters.massSolarMasses / ReferenceMassSolarMasses,
+                1.0e-6f
+            );
+            const float massVisualScale = std::clamp(std::pow(massRatio, 0.12f), 0.40f, 1.18f);
+            const float renderedCameraRadius = std::clamp(camera.radius / massVisualScale, 7.0f, 52.0f);
+            const glm::vec3 cameraPosition = renderedCameraRadius * glm::vec3(
                 std::cos(camera.latitude) * std::sin(camera.yaw),
                 std::sin(camera.latitude),
                 std::cos(camera.latitude) * std::cos(camera.yaw)
@@ -401,6 +451,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             if (glm::length(right) < 0.01f) right = glm::vec3(1.0f, 0.0f, 0.0f);
             const glm::vec3 up = glm::normalize(glm::cross(right, forward));
 
+            if (framebufferWidth != sceneWidth || framebufferHeight != sceneHeight) {
+                glBindTexture(GL_TEXTURE_2D, sceneTexture);
+                glTexImage2D(
+                    GL_TEXTURE_2D,
+                    0,
+                    GlRgba8,
+                    framebufferWidth,
+                    framebufferHeight,
+                    0,
+                    GL_RGBA,
+                    GL_UNSIGNED_BYTE,
+                    nullptr
+                );
+                bindFramebuffer(GlFramebuffer, sceneFramebuffer);
+                framebufferTexture2D(
+                    GlFramebuffer,
+                    GlColorAttachment0,
+                    GL_TEXTURE_2D,
+                    sceneTexture,
+                    0
+                );
+                if (checkFramebufferStatus(GlFramebuffer) != GlFramebufferComplete) {
+                    throw std::runtime_error("Scene framebuffer creation failed");
+                }
+                sceneWidth = framebufferWidth;
+                sceneHeight = framebufferHeight;
+            }
+
+            bindFramebuffer(GlFramebuffer, sceneFramebuffer);
             glViewport(0, 0, framebufferWidth, framebufferHeight);
             glDisable(GL_BLEND);
             glClearColor(0.002f, 0.003f, 0.008f, 1.0f);
@@ -422,6 +501,28 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             setUniform1f(rayProgram, "uMinStep", parameters.minimumStep);
             setUniform1f(rayProgram, "uMaxStep", parameters.maximumStep);
             glUniform1i(glGetUniformLocation(rayProgram, "uMaxSteps"), parameters.maximumSteps);
+            drawArrays(GL_TRIANGLES, 0, 3);
+
+            bindFramebuffer(GlFramebuffer, 0);
+            glViewport(0, 0, framebufferWidth, framebufferHeight);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glUseProgram(blitProgram);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, sceneTexture);
+            glUniform1i(glGetUniformLocation(blitProgram, "uScene"), 0);
+            setUniform2f(
+                blitProgram,
+                "uResolution",
+                static_cast<float>(framebufferWidth),
+                static_cast<float>(framebufferHeight)
+            );
+            const float polarViewAmount = glm::smoothstep(
+                glm::radians(68.0f),
+                glm::radians(82.0f),
+                std::abs(camera.latitude)
+            );
+            setUniform1f(blitProgram, "uAxisRepairWidth", 12.0f + 24.0f * polarViewAmount);
+            setUniform1f(blitProgram, "uPolarRepairAmount", polarViewAmount);
             drawArrays(GL_TRIANGLES, 0, 3);
 
             ImGui_ImplOpenGL3_NewFrame();
@@ -449,7 +550,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
+        glDeleteTextures(1, &sceneTexture);
+        deleteFramebuffers(1, &sceneFramebuffer);
         glDeleteVertexArrays(1, &fullscreenVao);
+        glDeleteProgram(blitProgram);
         glDeleteProgram(rayProgram);
         glfwDestroyWindow(window);
         glfwTerminate();
