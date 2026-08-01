@@ -38,7 +38,7 @@ jobs:
           spirv-val dist/shaders/blit.frag.spv
       - name: Package Linux Vulkan build
         run: |
-          tar -C dist -czf ../Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz \
+          tar -czf Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz -C dist \
             "Supermassive Black Hole-simulator" \
             README.md \
             shaders
