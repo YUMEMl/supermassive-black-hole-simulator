@@ -1,6 +1,8 @@
 # Local build outputs
 /build/
+/build-linux/
 /dist/
+/work/
 
 # Local compiler and downloaded SDKs
 /.toolchain/

@@ -1,5 +1,32 @@
-#version 330 core
+#ifdef TON618_VULKAN
+layout(location = 0) out vec4 fragColor;
 
+layout(push_constant) uniform RayParameters {
+    vec4 resolutionTime;
+    vec4 cameraPositionFov;
+    vec4 cameraForwardSpin;
+    vec4 cameraRightDiskInner;
+    vec4 cameraUpDiskOuter;
+    vec4 integration;
+    ivec4 limits;
+} ray;
+
+#define uResolution ray.resolutionTime.xy
+#define uTime ray.resolutionTime.z
+#define uCameraPosition ray.cameraPositionFov.xyz
+#define uFov ray.cameraPositionFov.w
+#define uCameraForward ray.cameraForwardSpin.xyz
+#define uSpin ray.cameraForwardSpin.w
+#define uCameraRight ray.cameraRightDiskInner.xyz
+#define uDiskInner ray.cameraRightDiskInner.w
+#define uCameraUp ray.cameraUpDiskOuter.xyz
+#define uDiskOuter ray.cameraUpDiskOuter.w
+#define uAccretionRate ray.integration.x
+#define uExposure ray.integration.y
+#define uMinStep ray.integration.z
+#define uMaxStep ray.integration.w
+#define uMaxSteps ray.limits.x
+#else
 in vec2 vUv;
 out vec4 fragColor;
 
@@ -18,6 +45,7 @@ uniform float uExposure;
 uniform float uMinStep;
 uniform float uMaxStep;
 uniform int uMaxSteps;
+#endif
 
 const float PI = 3.141592653589793;
 const float HALF_PI = 1.5707963267948966;
@@ -435,7 +463,12 @@ vec3 traceStablePixel(vec2 pixel) {
 }
 
 void main() {
-    vec2 pixel = (2.0 * gl_FragCoord.xy - uResolution) / uResolution.y;
+#ifdef TON618_VULKAN
+    vec2 fragmentCoordinate = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+#else
+    vec2 fragmentCoordinate = gl_FragCoord.xy;
+#endif
+    vec2 pixel = (2.0 * fragmentCoordinate - uResolution) / uResolution.y;
     vec2 sampleOffset = vec2(0.0, 0.58) / uResolution.y;
     vec3 color = 0.5 * (
         traceStablePixel(pixel - sampleOffset) +

@@ -1,0 +1,50 @@
+name: Linux Vulkan build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Vulkan and window-system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            cmake \
+            glslc \
+            libvulkan-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            ninja-build \
+            spirv-tools \
+            wayland-protocols \
+            xorg-dev
+      - name: Configure
+        run: cmake -S . -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build-linux --parallel
+      - name: Validate
+        run: ctest --test-dir build-linux --output-on-failure
+      - name: Validate SPIR-V
+        run: |
+          spirv-val dist/shaders/fullscreen.vert.spv
+          spirv-val dist/shaders/kerr.frag.spv
+          spirv-val dist/shaders/blit.frag.spv
+      - name: Package Linux Vulkan build
+        run: |
+          tar -C dist -czf ../Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz \
+            "Supermassive Black Hole-simulator" \
+            README.md \
+            shaders
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-vulkan-package
+          path: Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz
+          if-no-files-found: error

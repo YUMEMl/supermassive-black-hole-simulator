@@ -18,3 +18,13 @@ jobs:
         run: cmake --build build --config Release --parallel
       - name: Validate
         run: ctest --test-dir build -C Release --output-on-failure
+      - name: Package Windows build
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/* -DestinationPath Supermassive-Black-Hole-simulator-Windows.zip
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: Supermassive-Black-Hole-simulator-Windows.zip
+          if-no-files-found: error
