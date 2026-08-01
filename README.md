@@ -1,6 +1,7 @@
 # Supermassive Black Hole Simulator
 
-Since this was put together on a whim by a layperson with no knowledge of astronomy, I don't think the calculations are correct. Please keep that in mind.
+Since this was put together on a whim by an amateur with limited knowledge of astronomy, I don't think the calculations are accurate. Please keep that in mind.
+
 
 A native visualization of the supermassive black hole TON 618. The Windows build uses OpenGL 3.3, while the Linux build uses Vulkan and runs natively on Wayland or X11.
 
