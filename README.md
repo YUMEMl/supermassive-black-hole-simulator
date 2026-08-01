@@ -39,7 +39,7 @@ Rendering is capped at 20 FPS. There is no FPS overlay or application icon.
 | GPU | Vulkan 1.1 or OpenGL 3.3 GPU with 2 GB VRAM | Dedicated GPU with 6 GB VRAM or more |
 | Storage | 100 MB available | 200 MB available |
 
-The Vulkan build has been verified on Arch Linux with an NVIDIA GeForce RTX 4070 Ti at the 20 FPS cap. The existing Windows/OpenGL build was previously verified on an NVIDIA GeForce RTX 4070 Ti. Actual performance depends mainly on GPU fragment-shader throughput and display resolution.
+The Vulkan build has been verified on Arch Linux with an NVIDIA GeForce RTX 4070 Ti at the 20 FPS cap. The existing Windows/OpenGL build was previously verified on an NVIDIA GeForce RTX 4070 (Windows 11) Ti. Actual performance depends mainly on GPU fragment-shader throughput and display resolution.
 
 ## Controls
 
