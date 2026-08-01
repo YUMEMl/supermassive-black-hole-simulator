@@ -345,9 +345,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         checkFramebufferStatus = loadOpenGlProcedure<CheckFramebufferStatusProc>("glCheckFramebufferStatus");
         deleteFramebuffers = loadOpenGlProcedure<DeleteFramebuffersProc>("glDeleteFramebuffers");
 
-        const std::string vertexSource = readTextFile(appDirectory / "shaders" / "fullscreen.vert");
-        const std::string raySource = readTextFile(appDirectory / "shaders" / "kerr.frag");
-        const std::string blitSource = readTextFile(appDirectory / "shaders" / "blit.frag");
+        const std::string glslVersion = "#version 330 core\n";
+        const std::string vertexSource = glslVersion + readTextFile(appDirectory / "shaders" / "fullscreen.vert");
+        const std::string raySource = glslVersion + readTextFile(appDirectory / "shaders" / "kerr.frag");
+        const std::string blitSource = glslVersion + readTextFile(appDirectory / "shaders" / "blit.frag");
         const GLuint rayProgram = createProgram(vertexSource, raySource);
         const GLuint blitProgram = createProgram(vertexSource, blitSource);
 
@@ -564,7 +565,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 glm::radians(82.0f),
                 std::abs(camera.latitude)
             );
-            setUniform1f(blitProgram, "uAxisRepairWidth", 12.0f + 24.0f * polarViewAmount);
+            setUniform1f(blitProgram, "uAxisRepairWidth", 28.0f + 24.0f * polarViewAmount);
             setUniform1f(blitProgram, "uPolarRepairAmount", polarViewAmount);
             drawArrays(GL_TRIANGLES, 0, 3);
 
