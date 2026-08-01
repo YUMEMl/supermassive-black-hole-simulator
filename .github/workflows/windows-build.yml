@@ -21,7 +21,7 @@ jobs:
       - name: Package Windows build
         shell: pwsh
         run: |
-          Compress-Archive -Path dist/* -DestinationPath Supermassive-Black-Hole-simulator-Windows.zip
+          Compress-Archive -Path dist/Release/* -DestinationPath Supermassive-Black-Hole-simulator-Windows.zip
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:

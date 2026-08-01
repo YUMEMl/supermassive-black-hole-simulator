@@ -143,6 +143,22 @@ target_include_directories(ton618 PRIVATE
     ${IMGUI_ROOT}/backends
 )
 
+add_custom_command(TARGET ton618 POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:ton618>/licenses"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/third_party/imgui/LICENSE.txt"
+            "$<TARGET_FILE_DIR:ton618>/licenses/DEAR-IMGUI-LICENSE.txt"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/third_party/glfw/LICENSE.md"
+            "$<TARGET_FILE_DIR:ton618>/licenses/GLFW-LICENSE.md"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/third_party/glm/copying.txt"
+            "$<TARGET_FILE_DIR:ton618>/licenses/GLM-LICENSE.txt"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/third_party/stb/LICENSE"
+            "$<TARGET_FILE_DIR:ton618>/licenses/STB-LICENSE.txt"
+)
+
 enable_testing()
 add_test(
     NAME project_validation

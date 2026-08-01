@@ -41,7 +41,8 @@ jobs:
           tar -czf Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz -C dist \
             "Supermassive Black Hole-simulator" \
             README.md \
-            shaders
+            shaders \
+            licenses
       - name: Upload Linux package
         uses: actions/upload-artifact@v4
         with:
