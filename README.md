@@ -150,4 +150,5 @@ The executable is written to `dist/`. GLFW, GLM, Dear ImGui, and stb are vendore
 li
 
 # LICENSE
+These codes are licensed under CC0.
 [![These codes are licensed under CC0.](https://qiita-user-contents.imgix.net/https%3A%2F%2Fmirrors.creativecommons.org%2Fpresskit%2Fbuttons%2F88x31%2Fsvg%2Fcc-zero.svg?ixlib=rb-4.0.0&auto=format&gif-q=60&q=75&w=1400&fit=max&s=034c24fa0b72713fa520808aebed578b)](https://creativecommons.org/publicdomain/zero/1.0/deed.en)
