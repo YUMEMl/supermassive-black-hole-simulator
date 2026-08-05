@@ -140,6 +140,9 @@ Install CMake 3.20 or newer, Ninja, and a Windows C++17 compiler, then run:
 ```powershell
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
+
+These codes are licensed under CC0.
+CC0
 ctest --test-dir build --output-on-failure
 ```
 
