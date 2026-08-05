@@ -147,3 +147,6 @@ ctest --test-dir build --output-on-failure
 ```
 
 The executable is written to `dist/`. GLFW, GLM, Dear ImGui, and stb are vendored under `third_party/`. Linux builds compile the GLSL shaders into SPIR-V automatically.
+
+[
+](http://creativecommons.org/publicdomain/zero/1.0/deed.ja)
