@@ -7,6 +7,8 @@ A native visualization of the supermassive black hole TON 618. The Windows build
 
 [Download the latest Windows build](https://github.com/YUMEMl/supermassive-black-hole-simulator/releases/latest)
 
+
+It should work, as virtually all current major GPUs—as well as those released within the last decade—from NVIDIA, AMD, and Intel are supported.
 ## Run
 
 ### Linux (Vulkan)
