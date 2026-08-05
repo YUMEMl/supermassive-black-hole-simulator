@@ -22,6 +22,7 @@ The simulator will not launch on GPUs or drivers that do not support OpenGL 3.3.
 Build the project, then run:
 
 ```bash
+
 ./dist/Supermassive\ Black\ Hole-simulator
 ```
 
