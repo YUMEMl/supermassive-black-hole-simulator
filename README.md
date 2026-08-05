@@ -12,6 +12,7 @@ VULKAN
 ※Since virtually all current major GPUs—as well as those released within the last decade—from NVIDIA, AMD, and Intel support Vulkan, it should work.(It will launch if it supports Vulkan 1.1)
 
 OpenGL
+
 The simulator will not launch on GPUs or drivers that do not support OpenGL 3.3.
 
 ## Run
