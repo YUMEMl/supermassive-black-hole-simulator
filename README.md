@@ -26,7 +26,14 @@ Build the project, then run:
 ```
 
 Keep the generated `dist/shaders/*.spv` files next to the executable. A Vulkan-capable GPU and its Vulkan driver are required. The program automatically uses GLFW's native Wayland backend when available and can also run under X11/XWayland.
+Requirements:
 
+- 64-bit Linux
+- Vulkan 1.1 compatible GPU
+- Vulkan loader and a Vulkan driver for your GPU
+- Wayland or X11/XWayland desktop session
+
+OpenGL 3.3 is not required for the Linux build.
 ### Windows (OpenGL)
 
 Extract the release ZIP and open `Supermassive Black Hole-simulator.exe`. Keep the adjacent `shaders` folder with the executable.
