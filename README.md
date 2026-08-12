@@ -1,61 +1,60 @@
 # Supermassive Black Hole Simulator
 
-Since this was put together on a whim by an amateur with limited knowledge of astronomy, I don't think the calculations are accurate. Please keep that in mind.
+[![License: CC0-1.0](https://licensebuttons.net/p/zero/1.0/88x31.png)](https://creativecommons.org/publicdomain/zero/1.0/)
+[![Linux Vulkan build](https://github.com/YUMEMl/supermassive-black-hole-simulator/actions/workflows/linux-vulkan-build.yml/badge.svg)](https://github.com/YUMEMl/supermassive-black-hole-simulator/actions/workflows/linux-vulkan-build.yml)
+[![Windows build](https://github.com/YUMEMl/supermassive-black-hole-simulator/actions/workflows/windows-build.yml/badge.svg)](https://github.com/YUMEMl/supermassive-black-hole-simulator/actions/workflows/windows-build.yml)
 
+A real-time visualization of the supermassive black hole TON 618, rendered by
+integrating photon trajectories through the Kerr metric on the GPU — every pixel
+traces its own light ray past the event horizon, photon ring, and accretion disk.
 
-A native visualization of the supermassive black hole TON 618. The Windows build uses OpenGL 3.3, while the Linux build uses Vulkan and runs natively on Wayland or X11.
+> **Note:** This was put together by an amateur with limited knowledge of
+> astronomy, so the calculations are an educational approximation and may not be
+> accurate. Please keep that in mind.
 
-[Download the latest Windows build](https://github.com/YUMEMl/supermassive-black-hole-simulator/releases/latest)
+<!-- TODO: screenshot / GIF here
+![Photon ring and lensed accretion disk](docs/screenshot.png)
+-->
 
-# VULKAN
+## Download
 
-Since virtually all current major GPUs—as well as those released within the last decade—from NVIDIA, AMD, and Intel support Vulkan, it should work.(It will launch if it supports Vulkan 1.1)
+No build required — grab a binary from the
+[latest release](https://github.com/YUMEMl/supermassive-black-hole-simulator/releases/latest):
 
-# OpenGL
+| Platform | File | Renderer |
+| --- | --- | --- |
+| Windows 10 / 11 (x64) | `Supermassive-Black-Hole-simulator-Windows.zip` | OpenGL 3.3 |
+| Linux (x86_64) | `Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz` | Vulkan 1.1 |
 
-The simulator will not launch on GPUs or drivers that do not support OpenGL 3.3.
+### Run on Windows
 
-## Run
+Extract the ZIP and open `Supermassive Black Hole-simulator.exe`. Keep the
+adjacent `shaders` folder next to the executable.
 
-### Linux (Vulkan)
+Because the executable is not code-signed, Windows SmartScreen may show
+"Windows protected your PC". Click **More info → Run anyway**. If you prefer not
+to trust an unsigned binary, you can [build from source](#build-from-source)
+instead.
 
-Build the project, then run:
+Requirements: Windows 10/11 (64-bit), OpenGL 3.3 compatible GPU.
+
+### Run on Linux
+
+Extract the tarball and run the executable. Keep the `shaders/*.spv` files next
+to it:
 
 ```bash
-./dist/Supermassive\ Black\ Hole-simulator
+tar -xzf Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz
+cd dist
+./"Supermassive Black Hole-simulator"
 ```
 
-Keep the generated `dist/shaders/*.spv` files next to the executable. A Vulkan-capable GPU and its Vulkan driver are required. The program automatically uses GLFW's native Wayland backend when available and can also run under X11/XWayland.
-Requirements:
+Requirements: 64-bit Linux, a Vulkan 1.1 capable GPU with its Vulkan driver
+installed, and a Wayland or X11/XWayland desktop session. GLFW's native Wayland
+backend is used automatically when available. OpenGL is not required on Linux.
 
-- 64-bit Linux
-- Vulkan 1.1 compatible GPU
-- Vulkan loader and a Vulkan driver for your GPU
-- Wayland or X11/XWayland desktop session
-
-OpenGL 3.3 is not required for the Linux build.
-### Windows (OpenGL)
-
-Extract the release ZIP and open `Supermassive Black Hole-simulator.exe`. Keep the adjacent `shaders` folder with the executable.
-
-Requirements:
-
-- Windows 10 or Windows 11
-- OpenGL 3.3 compatible GPU
-
-Rendering is capped at 20 FPS. There is no FPS overlay or application icon.
-
-## Recommended PC specifications
-
-| Component | Minimum | Recommended for the 20 FPS target |
-| --- | --- | --- |
-| OS | 64-bit Linux with Vulkan 1.1, or Windows 10 64-bit | Current 64-bit Linux or Windows 11 |
-| CPU | 4-core x64 processor | Modern 6-core processor or better |
-| Memory | 8 GB RAM | 16 GB RAM |
-| GPU | Vulkan 1.1 or OpenGL 3.3 GPU with 2 GB VRAM | Dedicated GPU with 6 GB VRAM or more |
-| Storage | 100 MB available | 200 MB available |
-
-The Vulkan build has been verified on Arch Linux with an NVIDIA GeForce RTX 4070 ti at the 20 FPS cap. The existing Windows/OpenGL build was previously verified on an NVIDIA GeForce RTX 4070 ti(Windows 11) . Actual performance depends mainly on GPU fragment-shader throughput and display resolution.
+Virtually all NVIDIA, AMD, and Intel GPUs released within the last decade
+support Vulkan 1.1, so it should just work.
 
 ## Controls
 
@@ -68,54 +67,75 @@ The Vulkan build has been verified on Arch Linux with an NVIDIA GeForce RTX 4070
 - `F1`: show or hide the parameter panel
 - `Esc`: close
 
-The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing angle, and simulation time scale. Auto play keeps the disk animation running while orbiting the camera until `P` is pressed again. Mass changes the visual scale and the calculated event-horizon radius shown in the upper-left readout. The visual scale is deliberately compressed so the full slider range remains usable on screen.
+The panel controls mass, dimensionless spin (`a/M`), accretion rate, viewing
+angle, and simulation time scale. Auto play keeps the disk animation running
+while orbiting the camera until `P` is pressed again. Mass changes the visual
+scale and the calculated event-horizon radius shown in the upper-left readout.
+The visual scale is deliberately compressed so the full slider range remains
+usable on screen.
+
+Rendering is intentionally capped at 20 FPS so the CPU and GPU can idle for the
+rest of each frame.
 
 ## Visual model
 
-- Vulkan/SPIR-V on Linux and OpenGL 3.3 on Windows
-- Numerical photon-path integration in a Kerr metric approximation
+- Numerical photon-path integration (RK4) in a Kerr metric approximation,
+  per pixel, with adaptive steps
 - Event-horizon silhouette, photon ring, and multiple lensed disk images
-- `T proportional to r^-3/4` disk color gradient
+- Thin-disk temperature law (`T ∝ r^-3/4`) driving the disk color gradient
 - Spin-dependent Doppler-inspired disk asymmetry
 - Procedurally generated animated accretion-disk filaments
 - Procedural stars and ACES-style tone mapping
+- Vulkan/SPIR-V on Linux, OpenGL 3.3 on Windows
 
-The shader integrates photon trajectories per pixel with adaptive steps. It is a real-time educational approximation, not a full Einstein-field-equation solver.
-
-The event horizon is based on the outer Kerr horizon:
+This is a real-time educational approximation, not a full
+Einstein-field-equation solver. The event horizon is based on the outer Kerr
+horizon:
 
 ```text
 r+ = (GM/c^2) * (1 + sqrt(1 - (a/M)^2))
 ```
 
-## Libraries
+## Recommended PC specifications
 
-- Vulkan on Linux
-- OpenGL 3.3 on Windows
-- GLFW 3.4
-- GLM 1.0.3
-- Dear ImGui 1.92.8
-- stb_image_write
+| Component | Minimum | Recommended for the 20 FPS target |
+| --- | --- | --- |
+| OS | 64-bit Linux with Vulkan 1.1, or Windows 10 64-bit | Current 64-bit Linux or Windows 11 |
+| CPU | 4-core x64 processor | Modern 6-core processor or better |
+| Memory | 8 GB RAM | 16 GB RAM |
+| GPU | Vulkan 1.1 or OpenGL 3.3 GPU with 2 GB VRAM | Dedicated GPU with 6 GB VRAM or more |
+| Storage | 100 MB available | 200 MB available |
 
-## Build
+The Vulkan build has been verified on Arch Linux with an NVIDIA GeForce RTX
+4070 Ti at the 20 FPS cap. The Windows/OpenGL build was verified on the same GPU
+under Windows 11. Actual performance depends mainly on GPU fragment-shader
+throughput and display resolution.
 
-Clone the submodules first:
+## Build from source
+
+Clone with submodules first (GLFW, GLM, Dear ImGui, and stb are vendored under
+`third_party/`):
 
 ```bash
 git clone --recurse-submodules https://github.com/YUMEMl/supermassive-black-hole-simulator.git
 cd supermassive-black-hole-simulator
 ```
 
+The executable is written to `dist/`. Linux builds compile the GLSL shaders into
+SPIR-V automatically.
+
 ### Arch Linux
 
-Install the compiler, Vulkan shader compiler, Vulkan loader, and GLFW platform dependencies:
+Install the compiler, Vulkan shader compiler, Vulkan loader, and GLFW platform
+dependencies:
 
 ```bash
 sudo pacman -S --needed base-devel cmake ninja shaderc vulkan-headers vulkan-icd-loader \
   wayland wayland-protocols libxkbcommon libx11 libxrandr libxinerama libxcursor libxi
 ```
 
-Install the Vulkan driver for your GPU as well, such as `nvidia-utils`, `vulkan-radeon`, or `vulkan-intel`. Then build and test:
+Also install the Vulkan driver for your GPU, such as `nvidia-utils`,
+`vulkan-radeon`, or `vulkan-intel`. Then build and test:
 
 ```bash
 cmake -S . -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -123,7 +143,7 @@ cmake --build build-linux --parallel
 ctest --test-dir build-linux --output-on-failure
 ```
 
-### Ubuntu/Debian
+### Ubuntu / Debian
 
 ```bash
 sudo apt install build-essential cmake ninja-build glslc libvulkan-dev \
@@ -140,16 +160,51 @@ Install CMake 3.20 or newer, Ninja, and a Windows C++17 compiler, then run:
 ```powershell
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
-
-These codes are licensed under CC0.
-CC0
 ctest --test-dir build --output-on-failure
 ```
 
-The executable is written to `dist/`. GLFW, GLM, Dear ImGui, and stb are vendored under `third_party/`. Linux builds compile the GLSL shaders into SPIR-V automatically.
-li
+## Diagnostics mode
 
-# LICENSE
-These codes are licensed under CC0.
+Both builds have a built-in diagnostics mode for bug reports and screenshots.
+Set the environment variable `TON618_DIAGNOSTICS` before launching, and about
+four seconds after startup the simulator writes two files to the system temp
+directory:
 
-[![These codes are licensed under CC0.](https://qiita-user-contents.imgix.net/https%3A%2F%2Fmirrors.creativecommons.org%2Fpresskit%2Fbuttons%2F88x31%2Fsvg%2Fcc-zero.svg?ixlib=rb-4.0.0&auto=format&gif-q=60&q=75&w=1400&fit=max&s=034c24fa0b72713fa520808aebed578b)](https://creativecommons.org/publicdomain/zero/1.0/deed.en)
+- `ton618-native-preview.png` — a screenshot of the current frame
+- `ton618-native-performance.txt` — FPS, GPU renderer/vendor, graphics API
+  version, and camera state
+
+Additional variables select preset scenarios: `TON618_DIAGNOSTICS_ZOOMED_OUT`,
+`TON618_DIAGNOSTICS_EDGE_ON`, `TON618_DIAGNOSTICS_LOW_MASS`,
+`TON618_DIAGNOSTICS_HIGH_MASS`, and `TON618_DIAGNOSTICS_AUTO_PLAY`. On Linux,
+`TON618_DIAGNOSTICS_EXIT` closes the simulator right after the files are
+written.
+
+Windows (PowerShell):
+
+```powershell
+$env:TON618_DIAGNOSTICS = "1"; $env:TON618_DIAGNOSTICS_EDGE_ON = "1"
+& ".\Supermassive Black Hole-simulator.exe"
+```
+
+Linux:
+
+```bash
+TON618_DIAGNOSTICS=1 TON618_DIAGNOSTICS_EDGE_ON=1 ./"Supermassive Black Hole-simulator"
+```
+
+When reporting an issue, attaching both files helps a lot.
+
+## Libraries
+
+- [GLFW](https://github.com/glfw/glfw) 3.4
+- [GLM](https://github.com/g-truc/glm) 1.0.3
+- [Dear ImGui](https://github.com/ocornut/imgui) 1.92.8
+- [stb_image_write](https://github.com/nothings/stb)
+- Vulkan (Linux) / OpenGL 3.3 (Windows)
+
+## License
+
+This project is released under [CC0 1.0 Universal](LICENSE) — public domain
+dedication. The vendored third-party libraries under `third_party/` keep their
+own licenses.

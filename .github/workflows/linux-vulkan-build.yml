@@ -3,11 +3,14 @@ name: Linux Vulkan build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,3 +52,11 @@ jobs:
           name: linux-vulkan-package
           path: Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz
           if-no-files-found: error
+      - name: Attach package to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" \
+            Supermassive-Black-Hole-simulator-Linux-Vulkan-x86_64.tar.gz \
+            --repo "${GITHUB_REPOSITORY}" --clobber
