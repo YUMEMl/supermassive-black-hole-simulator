@@ -101,7 +101,7 @@ r+ = (GM/c^2) * (1 + sqrt(1 - (a/M)^2))
 | Component | Minimum | Recommended for the 20 FPS target |
 | --- | --- | --- |
 | OS | 64-bit Linux with Vulkan 1.1, or Windows 10 64-bit | 64-bit Linux or Windows 11 |
-| CPU | 4-core x64 processor | Modern 6-core processor or better |
+| CPU | 4-core x64 processor | 6-core processor or better |
 | Memory | 8 GB RAM | 16 GB RAM |
 | GPU | Vulkan 1.1 or OpenGL 3.3 GPU with 2 GB VRAM | GPU with 6 GB VRAM or more |
 | Storage | 100 MB available | 200 MB available |
