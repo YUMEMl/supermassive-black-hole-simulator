@@ -103,7 +103,7 @@ r+ = (GM/c^2) * (1 + sqrt(1 - (a/M)^2))
 | OS | 64-bit Linux with Vulkan 1.1, or Windows 10 64-bit | Current 64-bit Linux or Windows 11 |
 | CPU | 4-core x64 processor | Modern 6-core processor or better |
 | Memory | 8 GB RAM | 16 GB RAM |
-| GPU | Vulkan 1.1 or OpenGL 3.3 GPU with 2 GB VRAM | Dedicated GPU with 6 GB VRAM or more |
+| GPU | Vulkan 1.1 or OpenGL 3.3 GPU with 2 GB VRAM | GPU with 6 GB VRAM or more |
 | Storage | 100 MB available | 200 MB available |
 
 The Vulkan build has been verified on Arch Linux with an NVIDIA GeForce RTX
