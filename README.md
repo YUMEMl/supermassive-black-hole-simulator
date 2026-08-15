@@ -16,6 +16,9 @@ traces its own light ray past the event horizon, photon ring, and accretion disk
 ![Photon ring and lensed accretion disk](docs/screenshot.png)
 -->
 
+## <u>I used Claude Code only for the documentation, license, and automated posting in v1.2.0.</u>
+
+
 ## Download
 
 No build required — grab a binary from the
